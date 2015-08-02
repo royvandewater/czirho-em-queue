@@ -1,0 +1,29 @@
+{
+  "name": "czirho-em-queue",
+  "version": "1.0.0",
+  "description": "Playing around with ømq",
+  "main": "index.js",
+  "scripts": {
+    "start": "node command.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/royvandewater/czirho-em-queue.git"
+  },
+  "keywords": [
+    "ømq"
+  ],
+  "author": "Roy van de Water",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/royvandewater/czirho-em-queue/issues"
+  },
+  "homepage": "https://github.com/royvandewater/czirho-em-queue#readme",
+  "dependencies": {
+    "coffee-script": "^1.9.3",
+    "commander": "^2.8.1",
+    "debug": "^2.2.0",
+    "lodash": "^3.10.0",
+    "zmq": "^2.12.0"
+  }
+}
