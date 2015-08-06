@@ -9,9 +9,9 @@ Queue = require './lib/queue'
 class Command
   constructor: ->
     @adapters = []
-    @buses = []
-    @cores = []
-    @queues = []
+    @buses    = []
+    @cores    = []
+    @queues   = []
 
   parseInt: (arg) => parseInt arg
 
