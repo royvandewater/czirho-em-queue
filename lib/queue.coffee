@@ -1,4 +1,4 @@
-debug = require('debug')('czirho:bus')
+debug = require('debug')('czirho:queue')
 
 class Queue
   constructor: (options={}) ->
