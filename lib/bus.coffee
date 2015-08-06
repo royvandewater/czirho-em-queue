@@ -2,10 +2,10 @@ debug = require('debug')('czirho:bus')
 
 class Bus
   constructor: (options={}) ->
-    {@port} = options
+    {@corePorts, @subscribePort} = options
 
   run: =>
-    debug "Started bus on port: #{@port}"
+    debug "Started bus listening for messages from: #{@corePorts}, emitting on #{@subscribePort}"
 
 
 module.exports = Bus
