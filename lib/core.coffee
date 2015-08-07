@@ -28,11 +28,10 @@ class Core
     @sendResponse id, returnValue
 
   sendResponse: (id, value) =>
-    response = [id, value]
     bus = _.sample @buses
 
-    debug "sending #{bus.port} this response: #{response}"
-    bus.socket.send JSON.stringify response
+    debug "sending #{bus.port} this response: #{value} with id: #{id}"
+    bus.socket.send [id, JSON.stringify value]
 
   sum: (addents) =>
     debug 'sum', addents
