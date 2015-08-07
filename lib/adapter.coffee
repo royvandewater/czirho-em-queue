@@ -1,5 +1,6 @@
 debug = require('debug')('czirho:adapter')
 _ = require 'lodash'
+uuid = require 'uuid'
 zmq = require 'zmq'
 
 class Adapter
@@ -14,8 +15,9 @@ class Adapter
 
   sendJob: =>
     queue = _.sample @queues
-    debug "sendJob", "sending to: #{queue.port}"
-    queue.socket.send JSON.stringify ['add', 1, 1]
+    id    = uuid.v1()
+    debug "sendJob", "sending to: #{queue.port} with id: #{id}"
+    queue.socket.send JSON.stringify ['sum', [1, 1], id]
 
   _createConnectedQueue: (port) =>
     socket = zmq.socket 'push'
