@@ -26,9 +26,9 @@ class Command
 
   run: =>
     @parseOptions()
+    @startBuses()
     @startCores()
     @startQueues()
-    @startBuses()
     @startAdapters()
 
   startAdapters: =>
@@ -39,13 +39,13 @@ class Command
 
   startBuses: =>
     _.times @options.buses, =>
-      bus = new Bus corePorts: @_coreSubscribePorts(), subscribePort: @_randomPort()
+      bus = new Bus insertPort: @_randomPort(), subscribePort: @_randomPort()
       bus.run()
       @buses.push bus
 
   startCores: =>
     _.times @options.cores, =>
-      core = new Core insertPort: @_randomPort(), subscribePort: @_randomPort()
+      core = new Core insertPort: @_randomPort(), busPorts: @_busInsertPorts()
       core.run()
       @cores.push core
 
@@ -55,14 +55,14 @@ class Command
       queue.run()
       @queues.push queue
 
+  _busInsertPorts: =>
+    _.pluck @buses, 'insertPort'
+
   _busSubscribePorts: =>
     _.pluck @buses, 'subscribePort'
 
   _coreInsertPorts: =>
     _.pluck @cores, 'insertPort'
-
-  _coreSubscribePorts: =>
-    _.pluck @cores, 'subscribePort'
 
   _queueInsertPorts: =>
     _.pluck @queues, 'insertPort'

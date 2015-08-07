@@ -6,13 +6,12 @@ VALID_OPERATIONS = ['sum']
 
 class Core
   constructor: (options={}) ->
-    {@insertPort, @subscribePort} = options
-    @outbox = zmq.socket 'push'
+    {@insertPort, @busPorts} = options
     @inbox = zmq.socket 'pull'
     @inbox.on 'message', @onMessage
 
   run: =>
-    @outbox.bindSync "tcp://127.0.0.1:#{@subscribePort}"
+    @buses = _.map @busPorts, @_createConnectedBus
     @inbox.bindSync "tcp://127.0.0.1:#{@insertPort}"
 
     debug "Started core listening on: #{@insertPort}, emitting on #{@subscribePort}"
@@ -26,13 +25,24 @@ class Core
       return debug error.message
 
     returnValue = @[operation](args)
-    response = [id, returnValue]
-    debug "sending #{response}"
-    @outbox.send JSON.stringify response
+    @sendResponse id, returnValue
+
+  sendResponse: (id, value) =>
+    response = [id, value]
+    bus = _.sample @buses
+
+    debug "sending #{bus.port} this response: #{response}"
+    bus.socket.send JSON.stringify response
 
   sum: (addents) =>
     debug 'sum', addents
     _.reduce addents, (total, n) => total + n
+
+  _createConnectedBus: (port) =>
+    socket = zmq.socket 'push'
+    socket.connect "tcp://127.0.0.1:#{port}"
+
+    return { port: port, socket: socket }
 
   _parseMessage: (messageStr) =>
     try

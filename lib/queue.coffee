@@ -7,7 +7,6 @@ class Queue
     {@insertPort, @corePorts} = options
     @jobQueue = zmq.socket 'pull'
     @jobQueue.on 'message', @onMessage
-    @cores = []
 
   run: =>
     @jobQueue.bindSync "tcp://127.0.0.1:#{@insertPort}"
