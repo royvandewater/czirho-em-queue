@@ -10,9 +10,9 @@ class Adapter
 
   run: =>
     if _.isEmpty @queuePorts
-      console.error "Adapter has no queues, cannot send jobs" 
+      console.error "Adapter has no queues, cannot send jobs"
       process.exit 1
-      
+
     console.warn "No buses passed in to adapter, responses will not be received" if _.isEmpty @busPorts
     console.warn "Interval is unset, that's probably a bad idea..." unless @interval?
 
@@ -31,7 +31,7 @@ class Adapter
     debug 'onMessage', id, messageStr
     _.each @buses, (bus) => bus.socket.unsubscribe id
     @printMessage id, messageStr
-    
+
   printMessage: (id, message) =>
     values = @pendingMessages[id].values
     valuesStr = values.join ' + '
@@ -43,12 +43,12 @@ class Adapter
 
     id    = uuid.v1()
     values = _.times _.random(1,10), => _.random(1,10)
-    
+
     @pendingMessages[id] = {operation: 'sum', values: values}
 
     debug "subscribing to #{id}"
     _.each @buses, (bus) => bus.socket.subscribe id
-    
+
     debug "sendJob", "sending to: #{queue.port} with id: #{id}"
     queue.socket.send JSON.stringify ['sum', values, id]
 

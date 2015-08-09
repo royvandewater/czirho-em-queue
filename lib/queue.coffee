@@ -14,7 +14,7 @@ class Queue
     debug "Started queue listening for jobs on: #{@insertPort}, putting jobs in #{@corePorts}"
 
   onMessage: (message) =>
-    debug 'message received', message.toString()
+    debug 'message received', message.toString(), @insertPort 
     @sendJob message
 
   sendJob: (message) =>

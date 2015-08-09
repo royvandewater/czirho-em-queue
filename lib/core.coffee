@@ -14,14 +14,14 @@ class Core
     if _.isEmpty @busPorts
       console.error 'Core has no buses, cannot send repsonses'
       process.exit 1
-      
+
     @buses = _.map @busPorts, @_createConnectedBus
     @inbox.bindSync "tcp://127.0.0.1:#{@insertPort}"
 
     debug "Started core listening on: #{@insertPort}, emitting on #{@subscribePort}"
 
   onMessage: (messageStr) =>
-    debug 'message received', messageStr.toString()
+    debug 'onMessage', messageStr.toString(), @insertPort
 
     try
       [operation, args, id] = @_parseMessage messageStr

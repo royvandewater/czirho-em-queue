@@ -15,7 +15,7 @@ class Bus
     debug "Started bus listening for messages on: #{@insertPort}, emitting on #{@subscribePort}"
 
   onMessage: (id, messageStr) =>
-    debug 'onMessage', id.toString(), messageStr.toString()
+    debug 'onMessage', id.toString(), messageStr.toString(), @insertPort 
     @outbox.send [id.toString(), messageStr.toString()]
 
 module.exports = Bus
