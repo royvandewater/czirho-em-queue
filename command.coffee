@@ -22,6 +22,7 @@ class Command
       .option '-b, --buses <n>',    'number of bus nodes (default: 1)', @parseInt, 1
       .option '-a, --adapters <n>', 'Number of adapter nodes (default: 1)', @parseInt, 1
       .option '-q, --queues <n>',   'Number of queue nodes (default: 1)', @parseInt, 1
+      .option '-d, --direct',       'Adapter bypasses the Queue. Allows the system to work with "--queues 0"'
       .parse process.argv
 
   run: =>
@@ -32,8 +33,13 @@ class Command
     @startAdapters()
 
   startAdapters: =>
+    busPorts = @_busSubscribePorts()
+    
+    queuePorts = @_queueInsertPorts()
+    queuePorts = @_coreInsertPorts() if @options.direct
+    
     _.times @options.adapters, =>
-      adapter = new Adapter queuePorts: @_queueInsertPorts(), busPorts: @_busSubscribePorts()
+      adapter = new Adapter busPorts: busPorts, queuePorts: queuePorts
       adapter.run()
       @adapters.push adapter
 
@@ -44,14 +50,18 @@ class Command
       @buses.push bus
 
   startCores: =>
+    busPorts = @_busInsertPorts()
+    
     _.times @options.cores, =>
-      core = new Core insertPort: @_randomPort(), busPorts: @_busInsertPorts()
+      core = new Core insertPort: @_randomPort(), busPorts: busPorts
       core.run()
       @cores.push core
 
   startQueues: =>
+    corePorts = @_coreInsertPorts()
+    
     _.times @options.queues, =>
-      queue = new Queue insertPort: @_randomPort(), corePorts: @_coreInsertPorts()
+      queue = new Queue insertPort: @_randomPort(), corePorts: corePorts
       queue.run()
       @queues.push queue
 
