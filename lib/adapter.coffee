@@ -6,6 +6,7 @@ zmq = require 'zmq'
 class Adapter
   constructor: (options={}) ->
     {@busPorts, @queuePorts} = options
+    @pendingMessages = {}
 
   run: =>
     debug "Started adapter. Putting jobs in #{@queuePorts}, getting messages from #{@busPorts}"
@@ -23,15 +24,26 @@ class Adapter
 
     debug 'onMessage', id, messageStr
     _.each @buses, (bus) => bus.socket.unsubscribe id
+    @printMessage id, messageStr
+    
+  printMessage: (id, message) =>
+    values = @pendingMessages[id].values
+    valuesStr = values.join ' + '
+    console.log "#{valuesStr} = #{message}"
+    delete @pendingMessages[id]
 
   sendJob: =>
     queue = _.sample @queues
     id    = uuid.v1()
-    debug "sendJob", "sending to: #{queue.port} with id: #{id}"
-    queue.socket.send JSON.stringify ['sum', [1, 1], id]
+    values = _.times _.random(1,10), => _.random(1,10)
+    
+    @pendingMessages[id] = {operation: 'sum', values: values}
 
     debug "subscribing to #{id}"
     _.each @buses, (bus) => bus.socket.subscribe id
+    
+    debug "sendJob", "sending to: #{queue.port} with id: #{id}"
+    queue.socket.send JSON.stringify ['sum', values, id]
 
   _createConnectedBus: (port) =>
     socket = zmq.socket 'sub'
