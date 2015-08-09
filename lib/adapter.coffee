@@ -5,7 +5,7 @@ zmq = require 'zmq'
 
 class Adapter
   constructor: (options={}) ->
-    {@busPorts, @queuePorts} = options
+    {@busPorts, @queuePorts, @interval} = options
     @pendingMessages = {}
 
   run: =>
@@ -14,13 +14,14 @@ class Adapter
       process.exit 1
       
     console.warn "No buses passed in to adapter, responses will not be received" if _.isEmpty @busPorts
+    console.warn "Interval is unset, that's probably a bad idea..." unless @interval?
 
     @buses = _.map @busPorts, @_createConnectedBus
     _.each @buses, (bus) => bus.socket.on 'message', @onMessage
 
     @queues = _.map @queuePorts, @_createConnectedQueue
 
-    @interval = setInterval @sendJob, 1000
+    @interval = setInterval @sendJob, @interval
     debug "Started adapter. Putting jobs in #{@queuePorts}, getting messages from #{@busPorts}"
 
   onMessage: (idBuffer, messageStrBuffer) =>
