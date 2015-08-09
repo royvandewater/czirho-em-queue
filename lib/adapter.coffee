@@ -9,18 +9,19 @@ class Adapter
     @pendingMessages = {}
 
   run: =>
-    debug "Started adapter. Putting jobs in #{@queuePorts}, getting messages from #{@busPorts}"
+    if _.isEmpty @queuePorts
+      console.error "Adapter has no queues, cannot send jobs" 
+      process.exit 1
+      
+    console.warn "No buses passed in to adapter, responses will not be received" if _.isEmpty @busPorts
 
     @buses = _.map @busPorts, @_createConnectedBus
     _.each @buses, (bus) => bus.socket.on 'message', @onMessage
-    console.warn "No buses passed in to adapter, responses will not be received" if _.isEmpty @buses
 
     @queues = _.map @queuePorts, @_createConnectedQueue
-    if _.isEmpty @queues
-      console.error "Adapter has no queues, cannot send jobs" 
-      process.exit 1
 
     @interval = setInterval @sendJob, 1000
+    debug "Started adapter. Putting jobs in #{@queuePorts}, getting messages from #{@busPorts}"
 
   onMessage: (idBuffer, messageStrBuffer) =>
     id = idBuffer.toString()

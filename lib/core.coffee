@@ -11,6 +11,10 @@ class Core
     @inbox.on 'message', @onMessage
 
   run: =>
+    if _.isEmpty @busPorts
+      console.error 'Core has no buses, cannot send repsonses'
+      process.exit 1
+      
     @buses = _.map @busPorts, @_createConnectedBus
     @inbox.bindSync "tcp://127.0.0.1:#{@insertPort}"
 
