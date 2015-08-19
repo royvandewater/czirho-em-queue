@@ -7,6 +7,7 @@ class Adapter
   constructor: (options={}) ->
     {@busPorts, @queuePorts, @interval} = options
     @pendingMessages = {}
+    @pendingRequests = {}
 
   run: =>
     if _.isEmpty @queuePorts
@@ -20,9 +21,14 @@ class Adapter
     _.each @buses, (bus) => bus.socket.on 'message', @onMessage
 
     @queues = _.map @queuePorts, @_createConnectedQueue
+    _.each @queues, (queue) => queue.socket.on 'message', @onReply
 
-    @interval = setInterval @sendJob, @interval
+    @interval = setInterval @doWork, @interval
     debug "Started adapter. Putting jobs in #{@queuePorts}, getting messages from #{@busPorts}"
+
+  doWork: =>
+    values = _.times _.random(1,10), => _.random(1,10)
+    @sendMessageForResult 'sum', values
 
   onMessage: (idBuffer, messageStrBuffer) =>
     id = idBuffer.toString()
@@ -32,25 +38,38 @@ class Adapter
     _.each @buses, (bus) => bus.socket.unsubscribe id
     @printMessage id, messageStr
 
+  onReply: (idBuffer) =>
+    id = idBuffer.toString()
+
+    debug 'onReply', id
+    delete @pendingRequests[id]
+
   printMessage: (id, message) =>
     values = @pendingMessages[id].values
     valuesStr = values.join ' + '
     console.log "#{valuesStr} = #{message}"
     delete @pendingMessages[id]
 
-  sendJob: =>
-    queue = _.sample @queues
-
+  sendMessageForResult: (operation, values) =>
     id    = uuid.v1()
-    values = _.times _.random(1,10), => _.random(1,10)
 
-    @pendingMessages[id] = {operation: 'sum', values: values}
+    @pendingMessages[id] = {operation: operation, values: values}
 
     debug "subscribing to #{id}"
     _.each @buses, (bus) => bus.socket.subscribe id
+    @sendMessage operation, values, id
 
-    debug "sendJob", "sending to: #{queue.port} with id: #{id}"
-    queue.socket.send JSON.stringify ['sum', values, id]
+  sendMessage: (operation, values, id) =>
+    @pendingRequests[id] = true
+
+    queue = _.sample @queues
+    debug "sendMessage", "sending to: #{queue.port} with id: #{id}"
+    queue.socket.send JSON.stringify [operation, values, id]
+    _.delay =>
+      return unless @pendingRequests[id]?
+      debug 'Request timed out, trying again'
+      @sendMessage operation, values, id
+    , 1000
 
   _createConnectedBus: (port) =>
     socket = zmq.socket 'sub'
@@ -59,7 +78,7 @@ class Adapter
     return { port: port, socket: socket }
 
   _createConnectedQueue: (port) =>
-    socket = zmq.socket 'push'
+    socket = zmq.socket 'req'
     socket.connect "tcp://127.0.0.1:#{port}"
 
     return { port: port, socket: socket }

@@ -5,7 +5,7 @@ zmq = require 'zmq'
 class Queue
   constructor: (options={}) ->
     {@insertPort, @corePorts} = options
-    @jobQueue = zmq.socket 'pull'
+    @jobQueue = zmq.socket 'rep'
     @jobQueue.on 'message', @onMessage
 
   run: =>
@@ -14,8 +14,17 @@ class Queue
     debug "Started queue listening for jobs on: #{@insertPort}, putting jobs in #{@corePorts}"
 
   onMessage: (message) =>
-    debug 'message received', message.toString(), @insertPort 
+    messageStr = message.toString()
+    debug 'message received', messageStr, @insertPort
+
+    try
+      [operation, args, id] = @_parseMessage messageStr
+    catch error
+      return debug error.message
+
     @sendJob message
+
+    @jobQueue.send id
 
   sendJob: (message) =>
     core = _.sample @cores
@@ -27,5 +36,13 @@ class Queue
     socket.connect "tcp://127.0.0.1:#{port}"
 
     return { port: port, socket: socket }
+
+  _parseMessage: (messageStr) =>
+    try
+      message = JSON.parse messageStr
+    catch
+      throw new Error 'bad JSON, ignoring'
+
+    return message
 
 module.exports = Queue
