@@ -10,6 +10,7 @@ class Core
     @initialize()
 
   initialize: =>
+    @pendingRequests = {}
     @inbox = zmq.socket 'rep'
     @inbox.on 'message', @onMessage
 
@@ -57,12 +58,18 @@ class Core
     debug "sending #{bus.port} this response: #{value} with id: #{id}"
     bus.socket.send [id, JSON.stringify value]
 
+    _.delay =>
+      return unless @pendingRequests[id]?
+      console.warn "Request timed out, trying again"
+      @sendResponse id, value
+    , 100
+
   sum: (addents) =>
     debug 'sum', addents
     _.reduce addents, (total, n) => total + n
 
   _createConnectedBus: (port) =>
-    socket = zmq.socket 'push'
+    socket = zmq.socket 'req'
     socket.connect "tcp://127.0.0.1:#{port}"
 
     return { port: port, socket: socket }

@@ -70,8 +70,6 @@ class Adapter
     _.delay =>
       return unless @pendingRequests[id]?
       console.warn "Request timed out, trying again"
-      # debug "Request timed out, removing #{queue.port} and trying again"
-      # _.pull @queues, queue
       @sendMessage operation, values, id
     , 100
 
