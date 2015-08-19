@@ -5,6 +5,9 @@ zmq = require 'zmq'
 class Queue
   constructor: (options={}) ->
     {@insertPort, @corePorts} = options
+    @initialize()
+
+  initialize: =>
     @jobQueue = zmq.socket 'rep'
     @jobQueue.on 'message', @onMessage
 
@@ -12,6 +15,22 @@ class Queue
     @jobQueue.bindSync "tcp://127.0.0.1:#{@insertPort}"
     @cores = _.map @corePorts, @_createConnectedCore
     debug "Started queue listening for jobs on: #{@insertPort}, putting jobs in #{@corePorts}"
+
+    # Uncomment to create random queue failures
+    randomDelay = _.random 0, 60
+    debug 'delay', randomDelay
+    _.delay @downTime, 1000 * randomDelay
+
+  downTime: =>
+    randomDelay = _.random 0, 5
+    console.log "downtime for #{randomDelay}s"
+    @jobQueue.close()
+    _.delay @restart, 1000 * randomDelay
+
+  restart: =>
+    console.log "coming back up"
+    @initialize()
+    @run()
 
   onMessage: (message) =>
     messageStr = message.toString()

@@ -63,13 +63,17 @@ class Adapter
     @pendingRequests[id] = true
 
     queue = _.sample @queues
+    throw new Error('no queues available for work') unless queue?
     debug "sendMessage", "sending to: #{queue.port} with id: #{id}"
     queue.socket.send JSON.stringify [operation, values, id]
+
     _.delay =>
       return unless @pendingRequests[id]?
-      debug 'Request timed out, trying again'
+      console.warn "Request timed out, trying again"
+      # debug "Request timed out, removing #{queue.port} and trying again"
+      # _.pull @queues, queue
       @sendMessage operation, values, id
-    , 1000
+    , 100
 
   _createConnectedBus: (port) =>
     socket = zmq.socket 'sub'
