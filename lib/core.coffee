@@ -7,7 +7,10 @@ VALID_OPERATIONS = ['sum']
 class Core
   constructor: (options={}) ->
     {@insertPort, @busPorts} = options
-    @inbox = zmq.socket 'pull'
+    @initialize()
+
+  initialize: =>
+    @inbox = zmq.socket 'rep'
     @inbox.on 'message', @onMessage
 
   run: =>
@@ -20,6 +23,22 @@ class Core
 
     debug "Started core listening on: #{@insertPort}, emitting on #{@subscribePort}"
 
+    # Uncomment to create random queue failures
+    randomDelay = _.random 0, 60
+    debug 'delay', randomDelay
+    _.delay @downTime, 1000 * randomDelay
+
+  downTime: =>
+    randomDelay = _.random 0, 5
+    console.log "downtime for #{randomDelay}s"
+    @inbox.close()
+    _.delay @restart, 1000 * randomDelay
+
+  restart: =>
+    console.log "coming back up"
+    @initialize()
+    @run()
+
   onMessage: (messageStr) =>
     debug 'onMessage', messageStr.toString(), @insertPort
 
@@ -30,6 +49,7 @@ class Core
 
     returnValue = @[operation](args)
     @sendResponse id, returnValue
+    @inbox.send id
 
   sendResponse: (id, value) =>
     bus = _.sample @buses
